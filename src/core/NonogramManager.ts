@@ -14,6 +14,11 @@ export default class NonogramManager {
         this.board = board ?? Array.from({ length: rows.length }, () => 
             Array(cols.length).fill('empty')
         );
+
+        this.solveStepByStep = this.solveStepByStep.bind(this);
+        this.applyChanges = this.applyChanges.bind(this);
+        this.isSolved = this.isSolved.bind(this);
+        this.printBoard = this.printBoard.bind(this);
     }
 
     /**
@@ -53,7 +58,8 @@ export default class NonogramManager {
                 affectedIndices.forEach(rowIndex => taskQueue.add(`R${rowIndex}`));
             }
 
-            //await new Promise(resolve => setTimeout(resolve, 100)); // Pausa de 100ms
+            const sleepTime = 100;
+            await new Promise(resolve => setTimeout(resolve, sleepTime));
         }
 
         return this.isSolved() ? 'SOLVED' : 'STUCK';
@@ -96,24 +102,3 @@ export default class NonogramManager {
         });
     }
 }
-
-// async function main() {
-//     const rows = [
-//         [2], [1, 2], [4], [3, 2], [2, 3], [1, 3, 2], [4, 3], [3, 3, 1], [10], [1]
-//     ];
-//     const cols = [
-//         [1], [10], [1, 3, 3], [3, 4], [2, 3, 1], [3, 2], [2, 3], [4], [2, 1], [2]
-//     ];
-    
-//     const manager = new NonogramManager(rows, cols);
-//     const status = await manager.solveStepByStep();
-    
-//     if (status === 'SOLVED') {
-//         console.log("¡Tablero completado!");
-//         manager.printBoard();
-//     } else {
-//         console.log("El solver llegó al límite de su lógica simple.");
-//     }
-// }
-
-// main();

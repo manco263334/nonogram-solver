@@ -7,9 +7,9 @@
                 <div class="input-group">
                     <label>Tamaño (Filas x Columnas)</label>
                     <div class="size-inputs">
-                        <input type="number" v-model.number="tempRows" min="1" max="20">
+                        <input type="number" v-model.number="templateRows" min="1" max="20">
                         <span>x</span>
-                        <input type="number" v-model.number="tempCols" min="1" max="20">
+                        <input type="number" v-model.number="templateColumns" min="1" max="20">
                     </div>
                 </div>
                 <button class="random-btn" @click="generateRandomLevel">
@@ -27,7 +27,7 @@
                 <div class="clue-input">
                     <h3>Pistas de Columnas (una línea por columna)</h3>
                     <p class="hint">Ejemplo: 3 1 ó 3, 1 (para un bloque de 3 y uno de 1)</p>
-                    <textarea v-model="colsInput" :placeholder="colPlaceholder"></textarea>
+                    <textarea v-model="columnsInput" :placeholder="columnPlaceholder"></textarea>
                 </div>
             </div>
 
@@ -38,7 +38,7 @@
             v-if="gameReady" 
             :key="gameId"
             :rows="parsedRows" 
-            :cols="parsedCols" 
+            :columns="parsedColumns" 
         />
     </div>
 </template>
@@ -48,18 +48,18 @@ import { ref, computed } from 'vue';
 import { Toast } from './constants/Toast';
 import NonogramBoard from './components/NonogramBoard.vue';
 
-const tempRows = ref(5);
-const tempCols = ref(5);
+const templateRows = ref(5);
+const templateColumns = ref(5);
 const rowsInput = ref("");
-const colsInput = ref("");
+const columnsInput = ref("");
 const gameReady = ref(false);
 const gameId = ref(0); // Para forzar el reinicio del componente
 
-const rowPlaceholder = computed(() => Array(tempRows.value).fill("3 1").join("\n"));
-const colPlaceholder = computed(() => Array(tempCols.value).fill("2").join("\n"));
+const rowPlaceholder = computed(() => Array(templateRows.value).fill("3 1").join("\n"));
+const columnPlaceholder = computed(() => Array(templateColumns.value).fill("2").join("\n"));
 
 const parsedRows = ref<Array<Array<number>>>([]);
-const parsedCols = ref<Array<Array<number>>>([]);
+const parsedColumns = ref<Array<Array<number>>>([]);
 
 // --- LÓGICA DEL GENERADOR ALEATORIO ---
 const calculateClues = (line: any) => {
@@ -78,8 +78,8 @@ const calculateClues = (line: any) => {
 };
 
 const generateRandomLevel = () => {
-    const rCount = tempRows.value;
-    const cCount = tempCols.value;
+    const rCount = templateRows.value;
+    const cCount = templateColumns.value;
 
     // 1. Crear una matriz aleatoria (50% de probabilidad de estar llena)
     const matrix = Array.from({ length: rCount }, () => 
@@ -96,7 +96,7 @@ const generateRandomLevel = () => {
         const column = matrix.map(row => row[c]);
         colClues.push(calculateClues(column));
     }
-    colsInput.value = colClues.join("\n");
+    columnsInput.value = colClues.join("\n");
 
     // 4. Opcional: Generar automáticamente el juego
     gameReady.value = false; // Reset breve para asegurar que el usuario vea el cambio
@@ -110,18 +110,18 @@ const parseClues = (input: string) => {
 
 const generateGame = () => {
     const pRows = parseClues(rowsInput.value);
-    const pCols = parseClues(colsInput.value);
+    const pCols = parseClues(columnsInput.value);
 
-    if (pRows.length !== tempRows.value || pCols.length !== tempCols.value) {
+    if (pRows.length !== templateRows.value || pCols.length !== templateColumns.value) {
         Toast.fire({
             icon: 'error',
-            text:`Debes ingresar exactamente ${tempRows.value} líneas de filas y ${tempCols.value} de columnas.`
+            text:`Debes ingresar exactamente ${templateRows.value} líneas de filas y ${templateColumns.value} de columnas.`
         });
         return;
     }
 
     parsedRows.value = pRows;
-    parsedCols.value = pCols;
+    parsedColumns.value = pCols;
     gameReady.value = true;
     gameId.value++; // Cambiar la key destruye y recrea el tablero limpio
 };

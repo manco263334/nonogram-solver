@@ -2,39 +2,39 @@
     <div class="nonogram-wrapper">
         <div class="controls">
             <button @click="solve" :disabled="isSolved">Resolver Lógicamente</button>
-            <span class="status-badge" :class="{ success: isSolved, error: isError, stuck: isStuck, running: isRunning }">
+            <span class="status-badge" :class="solverClass[status]">
                 Estado: {{ solverTranslations[status] }}
             </span>
         </div>
 
         <div class="game-container" :style="gridStyle">
-        <div class="corner"></div>
+            <div class="corner"></div>
 
-        <div v-for="(col, cIdx) in cols" :key="'hc'+cIdx" 
-            class="col-clue-box" :class="{ completed: isLineComplete(getColumn(cIdx), col) }">
-            <div class="clue-numbers">
-                <span v-for="(num, nIdx) in col" :key="'cn'+nIdx">{{ num }}</span>
-            </div>
-        </div>
-
-        <template v-for="(row, rIdx) in rows" :key="'row-group-'+rIdx">
-            <div class="row-clue-box" :class="{ completed: isLineComplete(board[rIdx]!, row) }">
-                <div class="clue-numbers row-mode">
-                    <span v-for="(num, nIdx) in row" :key="'rn'+nIdx">{{ num }}</span>
+            <div v-for="(column, columnIndex) in columns" :key="'hc' + columnIndex" 
+                class="col-clue-box" :class="{ completed: isLineComplete(getColumn(columnIndex), column) }">
+                <div class="clue-numbers">
+                    <span v-for="(number, numberIndex) in column" :key="'columnNumber'+numberIndex">{{ number }}</span>
                 </div>
             </div>
 
-            <div 
-                v-for="(cell, cIdx) in board[rIdx]" 
-                :key="rIdx + '-' + cIdx"
-                class="tile"
-                :class="cell"
-                @click="toggleCell(rIdx, cIdx)"
-                @contextmenu.prevent="markBlocked(rIdx, cIdx)"
-            >
-                <span v-if="cell === 'blocked'">×</span>
-            </div>
-        </template>
+            <template v-for="(row, rowIndex) in rows" :key="'row-group-' + rowIndex">
+                <div class="row-clue-box" :class="{ completed: isLineComplete(board[rowIndex]!, row) }">
+                    <div class="clue-numbers row-mode">
+                        <span v-for="(number, numberIndex) in row" :key="'rowNumber' + numberIndex">{{ number }}</span>
+                    </div>
+                </div>
+
+                <div 
+                    v-for="(cell, columnIndex) in board[rowIndex]" 
+                    :key="rowIndex + '-' + columnIndex"
+                    class="tile"
+                    :class="cell"
+                    @click="toggleCell(rowIndex, columnIndex)"
+                    @contextmenu.prevent="markBlocked(rowIndex, columnIndex)"
+                >
+                    <span v-if="cell === 'blocked'">×</span>
+                </div>
+            </template>
         </div>
     </div>
 </template>
@@ -50,31 +50,39 @@ const solverTranslations = {
     IDLE: 'ESPERANDO...',
     STUCK: 'ATORADO',
     ERROR: 'ERROR'
-} as { [key: string]: string }
+} as { [key: string]: string };
+
+const solverClass = {
+    SOLVED: 'success',
+    'RUNNING...': 'running',
+    STUCK: 'stuck',
+    ERROR: 'error',
+    IDLE: ''
+} as { [key: string]: string };
 
 const props = defineProps({
     rows: { type: Array<Array<number>>, default: () => [[3], [1], [3]] },
-    cols: { type: Array<Array<number>>, default: () => [[1,1], [3], [1,1]] }
+    columns: { type: Array<Array<number>>, default: () => [[1,1], [3], [1,1]] }
 });
 
-const manager = new NonogramManager(props.rows, props.cols);
-const board = reactive(manager.board);
+const board = reactive(
+    Array.from({ length: props.rows.length }, () =>
+        Array(props.columns.length).fill('empty')
+    )
+);
+const manager = new NonogramManager(props.rows, props.columns, board);
 const status = ref('IDLE');
 
 const isSolved = computed(() => status.value === 'SOLVED');
-const isStuck = computed(() => status.value === 'STUCK');
-const isRunning = computed(() => status.value === 'RUNNING...');
-const isError = computed(() => status.value === 'ERROR');
 
 const gridStyle = computed(() => ({
     display: 'grid',
-    gridTemplateColumns: `auto repeat(${props.cols.length}, 30px)`,
+    gridTemplateColumns: `auto repeat(${props.columns.length}, 30px)`,
     gridTemplateRows: `auto repeat(${props.rows.length}, 30px)`,
     gap: '2px'
 }));
 
 // --- LÓGICA DE VALIDACIÓN ---
-
 const getColumn = (colIndex: number) => board.map(row => row[colIndex]) as Array<TileState>;
 
 const isLineComplete = (line: Array<TileState>, clues: Clues) => {
@@ -97,7 +105,6 @@ const isLineComplete = (line: Array<TileState>, clues: Clues) => {
 };
 
 // --- ACCIONES ---
-
 const toggleCell = (r: number, c: number) => {
     if (board[r]![c] === 'empty') board[r]![c] = 'filled';
     else board[r]![c] = 'empty';
