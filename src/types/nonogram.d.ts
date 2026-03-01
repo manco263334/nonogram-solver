@@ -1,5 +1,7 @@
 export type Board = TileState[][];
 
+export type Clues = Array<number>
+
 export type TileState = 'empty' | 'filled' | 'blocked';
 
 export interface SolverResult {

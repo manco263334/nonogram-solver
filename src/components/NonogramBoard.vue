@@ -2,8 +2,8 @@
     <div class="nonogram-wrapper">
         <div class="controls">
             <button @click="solve" :disabled="isSolved">Resolver Lógicamente</button>
-            <span class="status-badge" :class="{ success: isSolved }">
-                Estado: {{ isSolved ? '¡COMPLETADO!' : status }}
+            <span class="status-badge" :class="{ success: isSolved, error: isError, stuck: isStuck, running: isRunning }">
+                Estado: {{ solverTranslations[status] }}
             </span>
         </div>
 
@@ -40,9 +40,17 @@
 </template>
 
 <script setup lang="ts">
+import type { TileState, Clues } from '../types/nonogram';
 import { ref, reactive, computed } from 'vue';
 import NonogramManager from '../core/NonogramManager';
-import type { TileState } from '../types/nonogram';
+
+const solverTranslations = {
+    SOLVED: '¡COMPLETADO!',
+    'RUNNING...': 'PENSANDO...',
+    IDLE: 'ESPERANDO...',
+    STUCK: 'ATORADO',
+    ERROR: 'ERROR'
+} as { [key: string]: string }
 
 const props = defineProps({
     rows: { type: Array<Array<number>>, default: () => [[3], [1], [3]] },
@@ -53,7 +61,10 @@ const manager = new NonogramManager(props.rows, props.cols);
 const board = reactive(manager.board);
 const status = ref('IDLE');
 
-const isSolved = computed(() => manager.isSolved());
+const isSolved = computed(() => status.value === 'SOLVED');
+const isStuck = computed(() => status.value === 'STUCK');
+const isRunning = computed(() => status.value === 'RUNNING...');
+const isError = computed(() => status.value === 'ERROR');
 
 const gridStyle = computed(() => ({
     display: 'grid',
@@ -66,7 +77,7 @@ const gridStyle = computed(() => ({
 
 const getColumn = (colIndex: number) => board.map(row => row[colIndex]) as Array<TileState>;
 
-const isLineComplete = (line: Array<TileState>, clues: any) => {
+const isLineComplete = (line: Array<TileState>, clues: Clues) => {
     // Extraemos los bloques actuales de la línea (ej: ['filled', 'filled', 'empty'] -> [2])
     const segments = [];
     let currentLen = 0;
@@ -140,8 +151,15 @@ const solve = async () => {
     text-decoration: line-through;
 }
 
-.col-clue-box { padding: 8px 0; min-height: 60px; }
-.row-clue-box { padding: 0 12px; min-width: 80px; }
+.col-clue-box { 
+    padding: 8px 0; 
+    min-height: 60px; 
+}
+
+.row-clue-box { 
+    padding: 0 12px; 
+    min-width: 80px; 
+}
 
 .clue-numbers {
     display: flex;
@@ -170,20 +188,62 @@ const solve = async () => {
     transition: background-color 0.1s;
 }
 
-.tile.filled { background-color: #2c3e50; }
-.tile.blocked { background-color: #eee; color: #e74c3c; font-weight: bold; }
+.tile.filled { 
+    background-color: #2c3e50; 
+}
+
+.tile.blocked { 
+    background-color: #eee; 
+    color: #e74c3c; 
+    font-weight: bold; 
+}
+
+.status-badge {
+    color: white;
+    font-weight: bold;
+}
 
 .status-badge.success {
     background-color: #42b983;
-    color: white;
+}
+
+.status-badge.stuck {
+    background-color: #b2b235;
+}
+
+.status-badge.error {
+    background-color: #f8625d;
+}
+
+.status-badge.running {
+    background-color: #40d9e4;
 }
 
 /* Otros */
-.controls { margin-bottom: 20px; display: flex; gap: 15px; align-items: center; }
+.controls { 
+    margin-bottom: 20px; 
+    display: flex; 
+    gap: 15px; 
+    align-items: center; 
+    justify-content: center; 
+}
 
-.status-badge { background: #333; padding: 4px 12px; border-radius: 20px; font-size: 0.9rem; }
+.status-badge { 
+    background: #333; 
+    padding: 4px 12px; 
+    border-radius: 20px; 
+    font-size: 0.9rem; 
+}
 
-button { padding: 8px 16px; border-radius: 6px; border: none; background: #42b983; color: white; cursor: pointer; }
+button { 
+    padding: 8px 16px; 
+    border-radius: 6px; 
+    border: none; background: #42b983; 
+    color: white; 
+    cursor: pointer; 
+}
 
-button:disabled { background: #555; }
+button:disabled { 
+    background: #555; 
+}
 </style>

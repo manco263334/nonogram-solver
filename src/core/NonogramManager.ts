@@ -47,13 +47,13 @@ export default class NonogramManager {
                 const columnData = this.board.map(row => row[index]);
                 const result = this.solver.getActions(this.cols[index]!, columnData as Array<TileState>);
                 if (result.status === 'INVALID') throw new Error(`Error en Columna ${index}`);
-                
+
                 // Si hubo cambios, agregamos las FILAS afectadas a la cola
                 const affectedIndices = this.applyChanges(index, result, 'col');
                 affectedIndices.forEach(rowIndex => taskQueue.add(`R${rowIndex}`));
             }
 
-            await new Promise(resolve => setTimeout(resolve, 100)); // Pausa de 100ms
+            //await new Promise(resolve => setTimeout(resolve, 100)); // Pausa de 100ms
         }
 
         return this.isSolved() ? 'SOLVED' : 'STUCK';
@@ -61,12 +61,13 @@ export default class NonogramManager {
 
     private applyChanges(index: number, actions: SolverResult, type: 'row' | 'col') {
         const affected: number[] = [];
-        const changes = [...actions.toFill.map(i => ({pos: i, state: 'filled' as TileState})), 
-                        ...actions.toBlock.map(i => ({pos: i, state: 'blocked' as TileState}))];
+        const changes = [...actions.toFill.map(i => ({ pos: i, state: 'filled' as TileState })), 
+                        ...actions.toBlock.map(i => ({ pos: i, state: 'blocked' as TileState }))];
 
-        changes.forEach(({pos, state}) => {
-            const r = type === 'row' ? index : pos.index;
-            const c = type === 'row' ? pos.index : index;
+        changes.forEach(({ pos, state }) => {
+            const isRow = type === 'row';
+            const r = isRow ? index : pos.index;
+            const c = isRow ? pos.index : index;
 
             if (this.board[r]![c] === 'empty') {
                 this.board[r]![c] = state;
@@ -91,7 +92,7 @@ export default class NonogramManager {
      */
     public printBoard() {
         this.board.forEach(row => {
-            console.log(row.map(cell => cell === 'filled' ? '█' : cell === 'blocked' ? '·' : ' ').join(' '));
+            console.log(row.map(cell => cell === 'filled' ? '█' : cell === 'blocked' ? 'X' : ' ').join(' '));
         });
     }
 }

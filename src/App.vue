@@ -45,6 +45,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
+import { Toast } from './constants/Toast';
 import NonogramBoard from './components/NonogramBoard.vue';
 
 const tempRows = ref(5);
@@ -66,10 +67,10 @@ const calculateClues = (line: any) => {
     let count = 0;
     line.forEach((cell: any) => {
         if (cell === 1) {
-        count++;
+            count++;
         } else if (count > 0) {
-        clues.push(count);
-        count = 0;
+            clues.push(count);
+            count = 0;
         }
     });
     if (count > 0) clues.push(count);
@@ -112,7 +113,10 @@ const generateGame = () => {
     const pCols = parseClues(colsInput.value);
 
     if (pRows.length !== tempRows.value || pCols.length !== tempCols.value) {
-        alert(`Error: Debes ingresar exactamente ${tempRows.value} líneas de filas y ${tempCols.value} de columnas.`);
+        Toast.fire({
+            icon: 'error',
+            text:`Debes ingresar exactamente ${tempRows.value} líneas de filas y ${tempCols.value} de columnas.`
+        });
         return;
     }
 
